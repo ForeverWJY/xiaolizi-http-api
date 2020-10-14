@@ -1,2 +1,2 @@
 # xiaolizi-http-api
-xiao li zi http api use demo
+使用http api并启用监听，默认为`10429`端口

@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -61,15 +62,24 @@ func main() {
 				if rm.FromQQ.UIN == LoginQQ {
 					return
 				}
-				switch rm.Type {
-				case "PrivateMsg":
-					sendPrivateMsg(rm.LogonQQ, rm.FromQQ.UIN, rm.Msg.Text)
-					break
-				case "GroupMsg":
-					sendGroupMsg(rm.LogonQQ, rm.FromGroup.GIN, rm.Msg.Text)
-					//sendPrivateMsg(rm.LogonQQ, 1066231345, rm.Msg.Text)
-					break
+
+				//获取天气情况
+				if strings.Index(rm.Msg.Text, "天气 ") == 0 {
+					weather := getWeather(strings.Replace(rm.Msg.Text, "天气 ", "", 1))
+					if weather != "" {
+						reply(rm, weather)
+					}
 				}
+
+				//测试回复发送的消息
+				//switch rm.Type {
+				//case "PrivateMsg":
+				//	sendPrivateMsg(rm.LogonQQ, rm.FromQQ.UIN, rm.Msg.Text)
+				//	break
+				//case "GroupMsg":
+				//	sendGroupMsg(rm.LogonQQ, rm.FromGroup.GIN, rm.Msg.Text)
+				//	break
+				//}
 			}()
 		}
 	}()

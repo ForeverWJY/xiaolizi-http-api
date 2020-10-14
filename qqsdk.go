@@ -10,6 +10,17 @@ import (
 	"strings"
 )
 
+func reply(reqMsg *ReceiveMessage, msg string) {
+	switch reqMsg.Type {
+	case "PrivateMsg":
+		sendPrivateMsg(LoginQQ, reqMsg.FromQQ.UIN, msg)
+		break
+	case "GroupMsg":
+		sendGroupMsg(LoginQQ, reqMsg.FromGroup.GIN, msg)
+		break
+	}
+}
+
 func getLoginQQ() int {
 	qq := get(fmt.Sprintf("http://%v/getlogonqq", *addr))
 	if qq == nil {
@@ -21,13 +32,13 @@ func getLoginQQ() int {
 	}
 	var ret = new(loginQQRet)
 	_ = json.Unmarshal(qq, &ret)
-	fmt.Println(ret.Ret)
+	log.Println(ret.Ret)
 
 	var event map[string]interface{}
 	_ = json.Unmarshal([]byte(ret.Ret), &event)
 	/*使用键输出地图值 */
 	for qq := range event["QQlist"].(map[string]interface{}) {
-		fmt.Println(qq)
+		log.Println("当前登录QQ：", qq)
 		atoi, _ := strconv.Atoi(qq)
 		return atoi
 	}
