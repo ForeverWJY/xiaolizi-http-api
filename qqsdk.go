@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,24 +20,23 @@ func reply(reqMsg *ReceiveMessage, msg string) {
 	}
 }
 
+type loginQQRet struct {
+	Ret string `json:"ret"`
+}
 func getLoginQQ() int {
 	qq := get(fmt.Sprintf("http://%v/getlogonqq", *addr))
 	if qq == nil {
-		log.Println("获取QQ号出错")
+		logApi.Debug("获取QQ号出错")
 		return 0
-	}
-	type loginQQRet struct {
-		Ret string `json:"ret"`
 	}
 	var ret = new(loginQQRet)
 	_ = json.Unmarshal(qq, &ret)
-	log.Println(ret.Ret)
+	logApi.Debug(ret.Ret)
 
 	var event map[string]interface{}
 	_ = json.Unmarshal([]byte(ret.Ret), &event)
-	/*使用键输出地图值 */
 	for qq := range event["QQlist"].(map[string]interface{}) {
-		log.Println("当前登录QQ：", qq)
+		logApi.Debug("当前登录QQ：", qq)
 		atoi, _ := strconv.Atoi(qq)
 		return atoi
 	}
@@ -66,32 +64,35 @@ func sendGroupMsg(fromqq int, toGroup int, text string) {
 }
 
 func postFormData(url string, bodystr string) []byte {
-	log.Printf("send %v\n", bodystr)
+	logApi.Debugf("send %v", bodystr)
 	resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(bodystr))
 	if err != nil {
-		// handle error
-		log.Printf("POST请求出错了 %v", err.Error())
+		logApi.Debugf("POST请求出错了 %v", err.Error())
+		return nil
 	}
-	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		// handle error
-		log.Printf("ioutil.ReadAll出错了 %v", err.Error())
+		logApi.Debugf("ioutil.ReadAll出错了 %v", err.Error())
+		return nil
 	}
-	//fmt.Println(string(body))
-	log.Printf("post返回值:%s\n", body)
+	_ = resp.Body.Close()
+	logApi.Debugf("post返回值:%s", body)
 	return body
 }
 
 func get(url string) []byte {
-	log.Printf("get url %v\n", url)
+	logApi.Debugf("get url %v", url)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("get error %v", err.Error())
+		logApi.Debugf("get error %v", err.Error())
 		return nil
 	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	log.Printf("get返回值:%s\n", body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logApi.Debugf("get read error %v", err.Error())
+		return nil
+	}
+	_ = resp.Body.Close()
+	logApi.Debugf("get返回值:%s", body)
 	return body
 }

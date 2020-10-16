@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bitbucket.org/Limard/logx"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/url"
@@ -16,7 +16,10 @@ import (
 var addr = flag.String("addr", "192.168.58.134:10429", "http service address")
 
 var (
-	LoginQQ int
+	LoginQQ  int //当前登录QQ
+	logApi   = logx.New(".", "xiaolizi-http")
+	pongTime = 5 * time.Second
+	pingTime = 5 * time.Second
 )
 
 func main() {
@@ -27,12 +30,25 @@ func main() {
 	signal.Notify(interrupt, os.Interrupt)
 
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
-	log.Printf("connecting to %s", u.String())
+	logApi.Debugf("connecting to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Fatal("dial:", err)
+		logApi.Error("dial:", err)
 	}
+
+	c.SetPingHandler(func(appData string) error {
+		_ = c.WriteMessage(websocket.PongMessage, []byte{})
+		return nil
+	})
+
+	c.SetPongHandler(func(appData string) error {
+		_ = c.WriteMessage(websocket.PingMessage, []byte{})
+		return nil
+	})
+
+	//c.SetReadDeadline(time.Now().Add(pongTime))
+
 	defer c.Close()
 
 	//获取当前QQ
@@ -44,20 +60,20 @@ func main() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Println("read:", err)
+				logApi.Debug("read:", err)
 				return
 			}
 			go func() {
-				log.Printf("recv: %s", message)
+				logApi.Debugf("recv: %s", message)
 				//msg := fmt.Sprintf("%s", message)
-				//log.Print(msg)
+				//logApi.Debug(msg)
 				var rm = new(ReceiveMessage)
 				err = json.Unmarshal(message, &rm)
 				if err != nil {
-					log.Print("转实体类出错")
+					logApi.Debug("转实体类出错")
 				}
 				//干其他事情
-				fmt.Printf("type: %v \n", rm.Type)
+				logApi.Debugf("type: %v", rm.Type)
 				//忽略自己的消息
 				if rm.FromQQ.UIN == LoginQQ {
 					return
@@ -69,17 +85,18 @@ func main() {
 					if weather != "" {
 						reply(rm, weather)
 					}
+				} else {
+					//测试回复发送的消息
+					switch rm.Type {
+					case "PrivateMsg":
+						sendPrivateMsg(rm.LogonQQ, rm.FromQQ.UIN, rm.Msg.Text)
+						break
+						//case "GroupMsg":
+						//	sendGroupMsg(rm.LogonQQ, rm.FromGroup.GIN, rm.Msg.Text)
+						//	break
+					}
 				}
 
-				//测试回复发送的消息
-				//switch rm.Type {
-				//case "PrivateMsg":
-				//	sendPrivateMsg(rm.LogonQQ, rm.FromQQ.UIN, rm.Msg.Text)
-				//	break
-				//case "GroupMsg":
-				//	sendGroupMsg(rm.LogonQQ, rm.FromGroup.GIN, rm.Msg.Text)
-				//	break
-				//}
 			}()
 		}
 	}()

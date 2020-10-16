@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/url"
 	"strings"
 )
@@ -14,7 +12,7 @@ func getWeather(city string) string {
 	body := v.Encode()
 	bytes := get("http://wthrcdn.etouch.cn/weather_mini?" + body)
 	if bytes == nil {
-		log.Println("获取天气出错")
+		logApi.Debug("获取天气出错")
 	}
 	var resp = new(WeatherResponse)
 	_ = json.Unmarshal(bytes, resp)
@@ -27,7 +25,7 @@ func getWeather(city string) string {
 			str = append(str, v.Date + "：" + v.Type + " "+v.Low + " " + v.High + " "+ v.Fengxiang + v.Fengli[9:index] + "\n")
 		}
 		str = append(str, "感冒情况：" + resp.Data.Ganmao)
-		fmt.Println(strings.Join(str, ""))
+		logApi.Debug(strings.Join(str, ""))
 		return strings.Join(str, "")
 	}
 	return ""
