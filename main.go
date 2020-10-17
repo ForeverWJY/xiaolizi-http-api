@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/Limard/logx"
 	"encoding/json"
 	"flag"
+	"github.com/coocood/freecache"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/url"
@@ -20,6 +21,8 @@ var (
 	logApi   = logx.New(".", "xiaolizi-http")
 	pongTime = 5 * time.Second
 	pingTime = 5 * time.Second
+	cacheSize = 100 * 1024 * 1024
+	cache = freecache.NewCache(cacheSize)
 )
 
 func main() {
