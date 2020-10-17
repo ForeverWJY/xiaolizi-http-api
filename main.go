@@ -54,6 +54,8 @@ func main() {
 	//获取当前QQ
 	LoginQQ = getLoginQQ()
 
+	testFunc()
+
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
