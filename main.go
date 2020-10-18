@@ -17,12 +17,12 @@ import (
 var addr = flag.String("addr", "192.168.58.134:10429", "http service address")
 
 var (
-	LoginQQ  int //当前登录QQ
-	logApi   = logx.New(".", "xiaolizi-http")
-	pongTime = 5 * time.Second
-	pingTime = 5 * time.Second
-	cacheSize = 100 * 1024 * 1024
-	cache = freecache.NewCache(cacheSize)
+	LoginQQ int //当前登录QQ
+	logApi  = logx.New(".", "xiaolizi-http")
+	//pongTime = 5 * time.Second
+	//pingTime = 5 * time.Second
+	cacheSize = 100 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
+	cache     = freecache.NewCache(cacheSize)
 )
 
 func main() {
@@ -116,17 +116,17 @@ func main() {
 		case t := <-ticker.C:
 			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
 			if err != nil {
-				log.Println("write:", err)
+				logApi.Debug("write:", err)
 				return
 			}
 		case <-interrupt:
-			log.Println("interrupt")
+			logApi.Debug("interrupt")
 
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
-				log.Println("write close:", err)
+				logApi.Error("write close:", err)
 				return
 			}
 			select {
