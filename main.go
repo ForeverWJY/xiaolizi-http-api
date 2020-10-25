@@ -3,10 +3,10 @@ package main
 import (
 	"bitbucket.org/Limard/logx"
 	"encoding/json"
-	"flag"
+	"fmt"
 	"github.com/coocood/freecache"
 	"github.com/gorilla/websocket"
-	"log"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"os/signal"
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-var addr = flag.String("addr", "192.168.58.134:10429", "http service address")
+//var addr = flag.String("addr", "192.168.58.134:10429", "http service address")
 
 var (
 	LoginQQ int //当前登录QQ
@@ -23,16 +23,46 @@ var (
 	//pingTime = 5 * time.Second
 	cacheSize = 100 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
 	cache     = freecache.NewCache(cacheSize)
+	addr      string
 )
 
+type JsonStruct struct {
+}
+
+type Config struct {
+	IP        string `json:"ip"`
+	Port      int    `json:"port"`
+	ManagerQQ []int  `json:"managerQQ"`
+}
+
+func (jst *JsonStruct) Load(filename string, v interface{}) {
+	//ReadFile函数会读取文件的全部内容，并将结果以[]byte类型返回
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+
+	//读取的数据为json格式，需要进行解码
+	err = json.Unmarshal(data, v)
+	if err != nil {
+		return
+	}
+}
+
 func main() {
-	flag.Parse()
-	log.SetFlags(0)
+	//flag.Parse()
+	//log.SetFlags(0)
+
+	JsonParse := new(JsonStruct)
+	v := Config{}
+	JsonParse.Load("./config.json", &v)
+
+	addr = fmt.Sprintf("%v:%v", v.IP, v.Port)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
+	u := url.URL{Scheme: "ws", Host: addr, Path: "/ws"}
 	logApi.Debugf("connecting to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -70,12 +100,27 @@ func main() {
 			}
 			go func() {
 				logApi.Debugf("recv: %s", message)
+				//if len(message) > 0 {
+				//	for i, ch := range message {
+				//		switch {
+				//		case ch > '~':
+				//			message[i] = ' '
+				//		case ch == '\r':
+				//		case ch == '\n':
+				//		case ch == '\t':
+				//		case ch < ' ':
+				//			message[i] = ' '
+				//		}
+				//	}
+				//}
+				//logApi.Debugf("recv1: %s", message)
 				//msg := fmt.Sprintf("%s", message)
 				//logApi.Debug(msg)
 				var rm = new(ReceiveMessage)
 				err = json.Unmarshal(message, &rm)
 				if err != nil {
-					logApi.Debug("转实体类出错")
+					logApi.Debug("转实体类出错", err.Error())
+					return
 				}
 				//干其他事情
 				logApi.Debugf("type: %v", rm.Type)

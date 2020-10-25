@@ -54,7 +54,7 @@ type Ret struct {
 }
 
 func getLoginQQ() int {
-	qq := get(fmt.Sprintf("http://%v/getlogonqq", *addr))
+	qq := get(fmt.Sprintf("http://%v/getlogonqq", addr))
 	if qq == nil {
 		logApi.Debug("获取QQ号出错")
 		return 0
@@ -81,7 +81,7 @@ func sendPrivateMsg(fromqq int, toqq int, text string) *ReplyReturnRet {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("text", text)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/sendprivatemsg", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/sendprivatemsg", addr), bodystr)
 	if data != nil {
 		var ret = new(ReplyReturnRet)
 		_ = json.Unmarshal(data, &ret)
@@ -98,7 +98,7 @@ func sendGroupMsg(fromqq int, togroup int, text string) *ReplyReturnRet {
 	r.Form.Add("togroup", fmt.Sprintf("%v", togroup))
 	r.Form.Add("text", text)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/sendgroupmsg", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/sendgroupmsg", addr), bodystr)
 	if data != nil {
 		var ret = new(ReplyReturnRet)
 		_ = json.Unmarshal(data, &ret)
@@ -116,7 +116,7 @@ func sendgrouptempmsg(fromqq int, togroup int, toqq int, text string) {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("text", text)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendgrouptempmsg", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendgrouptempmsg", addr), bodystr)
 }
 
 //添加好友
@@ -128,7 +128,7 @@ func addfriend(fromqq int, toqq int, text string) {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("text", text)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/addfriend", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/addfriend", addr), bodystr)
 }
 
 //添加群
@@ -140,7 +140,7 @@ func addgroup(fromqq int, togroup int, text string) {
 	r.Form.Add("togroup", fmt.Sprintf("%v", togroup))
 	r.Form.Add("text", text)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/addgroup", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/addgroup", addr), bodystr)
 }
 
 //删除好友
@@ -150,7 +150,7 @@ func deletefriend(fromqq int, toqq int) {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/deletefriend", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/deletefriend", addr), bodystr)
 }
 
 //置屏蔽好友
@@ -166,7 +166,7 @@ func setfriendignmsg(fromqq int, toqq int, ignore bool) {
 		r.Form.Add("ignore", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/setfriendignmsg", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/setfriendignmsg", addr), bodystr)
 }
 
 //置特别关心好友
@@ -182,7 +182,7 @@ func setfriendcare(fromqq int, toqq int, care bool) {
 		r.Form.Add("care", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/setfriendcare", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/setfriendcare", addr), bodystr)
 }
 
 //发送好友XML消息
@@ -194,7 +194,7 @@ func sendprivatexmlmsg(fromqq int, toqq int, xml string) {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("xml", xml)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendprivatexmlmsg", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendprivatexmlmsg", addr), bodystr)
 }
 
 //发送群XML消息
@@ -211,7 +211,7 @@ func sendgroupxmlmsg(fromqq int, togroup int, xml string, anonymous bool) {
 		r.Form.Add("anonymous", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendgroupxmlmsg", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendgroupxmlmsg", addr), bodystr)
 }
 
 //发送好友JSON消息
@@ -223,7 +223,7 @@ func sendprivatejsonmsg(fromqq int, toqq int, json string) {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("json", json)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendprivatejsonmsg", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendprivatejsonmsg", addr), bodystr)
 }
 
 //发送群JSON消息
@@ -240,7 +240,7 @@ func sendgroupjsonlmsg(fromqq int, togroup int, json string, anonymous bool) {
 		r.Form.Add("anonymous", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendgroupjsonlmsg", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendgroupjsonlmsg", addr), bodystr)
 }
 
 //上传好友图片，返回值可用于发送图片
@@ -273,7 +273,7 @@ func sendprivatepic(fromqq int, toqq int, fromtype int, pic string, path string,
 		r.Form.Add("flashpic", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendprivatepic", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendprivatepic", addr), bodystr)
 }
 
 //上传群图片，返回值可用于发送图片
@@ -306,7 +306,7 @@ func sendgrouppic(fromqq int, togroup int, fromtype int, pic string, path string
 		r.Form.Add("flashpic", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendgrouppic", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendgrouppic", addr), bodystr)
 }
 
 //向好友发送语音
@@ -341,7 +341,7 @@ func sendprivateaudio(fromqq int, toqq int, audiotype int, text string, fromtype
 		r.Form.Add("url", url)
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendprivateaudio", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendprivateaudio", addr), bodystr)
 }
 
 //向群发送语音
@@ -376,7 +376,7 @@ func sendgroupaudio(fromqq int, togroup int, audiotype int, text string, fromtyp
 		r.Form.Add("url", url)
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/sendgroupaudio", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/sendgroupaudio", addr), bodystr)
 }
 
 //上传头像
@@ -401,7 +401,7 @@ func uploadfacepic(fromqq int, fromtype int, pic string, path string, url string
 		r.Form.Add("url", url)
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/uploadfacepic", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/uploadfacepic", addr), bodystr)
 }
 
 //上传群头像
@@ -428,7 +428,7 @@ func uploadgroupfacepic(fromqq int, group int, fromtype int, pic string, path st
 		r.Form.Add("url", url)
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/uploadgroupfacepic", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/uploadgroupfacepic", addr), bodystr)
 }
 
 //设置群名片
@@ -441,7 +441,7 @@ func setgroupcard(fromqq int, togroup int, toqq int, card string) {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("card", card)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/setgroupcard", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/setgroupcard", addr), bodystr)
 }
 
 //取昵称
@@ -457,7 +457,7 @@ func getnickname(fromqq int, toqq int, fromcache bool) string {
 	}
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getnickname", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getnickname", addr), bodystr)
 	if data == nil {
 		logApi.Debug("取昵称出错")
 		return ""
@@ -475,7 +475,7 @@ func getgroupnamefromcache(group int) string {
 	_ = r.ParseForm()
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getgroupnamefromcache", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getgroupnamefromcache", addr), bodystr)
 	if data == nil {
 		logApi.Debug("从缓存取群名称出错")
 		return ""
@@ -493,7 +493,7 @@ func getfriendlist(logonqq int) *FriendListRet {
 	_ = r.ParseForm()
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getfriendlist", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getfriendlist", addr), bodystr)
 	if data == nil {
 		logApi.Error("取好友列表出错")
 		return nil
@@ -524,7 +524,7 @@ func getgrouplist(logonqq int) *GroupListRet {
 	_ = r.ParseForm()
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getgrouplist", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getgrouplist", addr), bodystr)
 	if data == nil {
 		logApi.Error("取群列表出错")
 		return nil
@@ -581,7 +581,7 @@ func getgroupmemberlist(logonqq int, group int) *GroupMemberListRet {
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getgroupmemberlist", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getgroupmemberlist", addr), bodystr)
 	if data == nil {
 		logApi.Error("取群成员列表出错")
 		return nil
@@ -631,7 +631,7 @@ func setgroupmgr(fromqq int, group int, toqq int, bemgr bool) {
 		r.Form.Add("bemgr", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	postFormData(fmt.Sprintf("http://%v/setgroupmgr", *addr), bodystr)
+	postFormData(fmt.Sprintf("http://%v/setgroupmgr", addr), bodystr)
 }
 
 //取管理层列表
@@ -642,7 +642,7 @@ func getgroupmgrlist(fromqq int, group int) []string {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getgroupmgrlist", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getgroupmgrlist", addr), bodystr)
 	if data == nil {
 		logApi.Error("取群管理层列表出错")
 		return nil
@@ -668,7 +668,7 @@ func getgroupcard(fromqq int, group int, toqq int) string {
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getgroupcard", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getgroupcard", addr), bodystr)
 	if data == nil {
 		logApi.Error("取群名片出错")
 		return ""
@@ -689,7 +689,7 @@ func getsignat(fromqq int, toqq int) string {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getsignat", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getsignat", addr), bodystr)
 	if data == nil {
 		logApi.Error("取个性签名出错")
 		return ""
@@ -710,7 +710,7 @@ func setnickname(fromqq int, nickname string) bool {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("nickname", nickname)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setnickname", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setnickname", addr), bodystr)
 	if data == nil {
 		logApi.Error("设置昵称出错")
 		//return ""
@@ -736,7 +736,7 @@ func setsignat(fromqq int, signature string) bool {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("signature", signature)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setsignat", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setsignat", addr), bodystr)
 	if data == nil {
 		logApi.Error("设置个性签名出错")
 		return false
@@ -767,7 +767,7 @@ func kickgroupmember(fromqq int, group int, toqq int, ignoreaddgrequest bool) bo
 		r.Form.Add("ignoreaddgrequest", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/kickgroupmember", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/kickgroupmember", addr), bodystr)
 	if data == nil {
 		logApi.Error("移出群成员出错")
 		return false
@@ -794,7 +794,7 @@ func mutegroupmember(fromqq int, group int, toqq int, time int) bool {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("time", fmt.Sprintf("%v", time))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/mutegroupmember", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/mutegroupmember", addr), bodystr)
 	if data == nil {
 		logApi.Error("禁言群成员出错")
 		return false
@@ -819,7 +819,7 @@ func exitgroup(fromqq int, group int) bool {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/exitgroup", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/exitgroup", addr), bodystr)
 	if data == nil {
 		logApi.Error("退群出错")
 		return false
@@ -844,7 +844,7 @@ func dispgroup(fromqq int, group int) bool {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/dispgroup", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/dispgroup", addr), bodystr)
 	if data == nil {
 		logApi.Error("解散群出错")
 		return false
@@ -874,7 +874,7 @@ func setgroupwholemute(fromqq int, group int, ismute bool) {
 		r.Form.Add("ismute", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgroupwholemute", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgroupwholemute", addr), bodystr)
 	if data == nil {
 		logApi.Error("全员禁言出错")
 		//return false
@@ -904,7 +904,7 @@ func setgrouppriv_newgroup(fromqq int, group int, allow bool) {
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_newgroup", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_newgroup", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_发起新的群聊出错")
 		//return false
@@ -934,7 +934,7 @@ func setgrouppriv_newtempsession(fromqq int, group int, allow bool) {
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_newtempsession", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_newtempsession", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_发起临时会话出错")
 		//return false
@@ -964,7 +964,7 @@ func setgrouppriv_uploadfile(fromqq int, group int, allow bool) {
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_uploadfile", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_uploadfile", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_上传文件出错")
 		//return false
@@ -994,7 +994,7 @@ func setgrouppriv_uploadphotoalbum(fromqq int, group int, allow bool) {
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_uploadphotoalbum", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_uploadphotoalbum", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_上传相册出错")
 		//return false
@@ -1024,7 +1024,7 @@ func setgrouppriv_invitein(fromqq int, group int, allow bool) {
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_invitein", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_invitein", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_邀请他人加群出错")
 		//return false
@@ -1054,7 +1054,7 @@ func setgrouppriv_anonymous(fromqq int, group int, allow bool) {
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_anonymous", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_anonymous", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_匿名聊天出错")
 		//return false
@@ -1084,7 +1084,7 @@ func setgrouppriv_tanbaishuo(fromqq int, group int, allow bool) {
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_tanbaishuo", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_tanbaishuo", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_坦白说出错")
 		//return false
@@ -1114,7 +1114,7 @@ func setgrouppriv_newmembercanviewhistorymsg(fromqq int, group int, allow bool) 
 		r.Form.Add("allow", "false")
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_newmembercanviewhistorymsg", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_newmembercanviewhistorymsg", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_新成员查看历史消息出错")
 		//return false
@@ -1140,7 +1140,7 @@ func setgrouppriv_inviteway(fromqq int, togroup int, way int) {
 	r.Form.Add("togroup", fmt.Sprintf("%v", togroup))
 	r.Form.Add("way", fmt.Sprintf("%v", way))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_inviteway", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgrouppriv_inviteway", addr), bodystr)
 	if data == nil {
 		logApi.Error("置群员权限_邀请方式出错")
 		//return false
@@ -1167,7 +1167,7 @@ func deletegroupmsg(fromqq int, group int, random int, req int) {
 	r.Form.Add("random", fmt.Sprintf("%v", random))
 	r.Form.Add("req", fmt.Sprintf("%v", req))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/deletegroupmsg", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/deletegroupmsg", addr), bodystr)
 	if data == nil {
 		logApi.Error("撤回群聊消息出错")
 		//return false
@@ -1195,7 +1195,7 @@ func deleteprivatemsg(fromqq int, toqq int, random int, req int, time int) {
 	r.Form.Add("req", fmt.Sprintf("%v", req))
 	r.Form.Add("time", fmt.Sprintf("%v", time))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/deleteprivatemsg", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/deleteprivatemsg", addr), bodystr)
 	if data == nil {
 		logApi.Error("撤回私聊消息出错")
 		//return false
@@ -1223,7 +1223,7 @@ func setsharepos(fromqq int, group int, posx float32, posy float64, enable bool)
 	r.Form.Add("posy", fmt.Sprintf("%v", posy))
 	r.Form.Add("enable", strconv.FormatBool(enable))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setsharepos", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setsharepos", addr), bodystr)
 	if data == nil {
 		logApi.Error("设置位置共享出错")
 		//return false
@@ -1250,7 +1250,7 @@ func uploadpos(fromqq int, group int, posx float32, posy float64) {
 	r.Form.Add("posx", fmt.Sprintf("%v", posx))
 	r.Form.Add("posy", fmt.Sprintf("%v", posy))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/uploadpos", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/uploadpos", addr), bodystr)
 	if data == nil {
 		logApi.Error("上报当前位置出错")
 		//return false
@@ -1276,7 +1276,7 @@ func getmutetime(fromqq int, group int) int64 {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getmutetime", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getmutetime", addr), bodystr)
 	if data == nil {
 		logApi.Error("取禁言时间出错")
 		return 0
@@ -1312,7 +1312,7 @@ func setgroupaddrequest(fromqq int, group int, qq int, seq int, op int, eventTyp
 	r.Form.Add("op", fmt.Sprintf("%v", op))
 	r.Form.Add("type", fmt.Sprintf("%v", eventType))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setgroupaddrequest", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setgroupaddrequest", addr), bodystr)
 	if data == nil {
 		logApi.Error("处理群验证事件出错")
 		//return 0
@@ -1334,7 +1334,7 @@ func setfriendaddrequest(fromqq int, qq int, seq int, op int) {
 	r.Form.Add("seq", fmt.Sprintf("%v", seq))
 	r.Form.Add("op", fmt.Sprintf("%v", op))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setfriendaddrequest", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setfriendaddrequest", addr), bodystr)
 	if data == nil {
 		logApi.Error("处理好友验证事件出错")
 		//return 0
@@ -1355,7 +1355,7 @@ func uploadfile(fromqq int, group int, path string) {
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	r.Form.Add("path", path)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/uploadfile", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/uploadfile", addr), bodystr)
 	if data == nil {
 		logApi.Error("上传文件出错")
 		//return 0
@@ -1376,7 +1376,7 @@ func newgroupfolder(fromqq int, group int, folder string) {
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	r.Form.Add("folder", folder)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/newgroupfolder", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/newgroupfolder", addr), bodystr)
 	if data == nil {
 		logApi.Error("创建群文件夹出错")
 		//return 0
@@ -1406,7 +1406,7 @@ func setonlinestate(fromqq int, state int, sun int, power int) {
 		}
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/setonlinestate", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/setonlinestate", addr), bodystr)
 	if data == nil {
 		logApi.Error("设置在线状态出错")
 		//return 0
@@ -1426,7 +1426,7 @@ func sendlike(fromqq int, toqq int) {
 	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/sendlike", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/sendlike", addr), bodystr)
 	if data == nil {
 		logApi.Error("发送名片赞出错")
 		//return 0
@@ -1449,7 +1449,7 @@ func getphotourl(photo string, fromqq int, group int) string {
 	}
 	r.Form.Add("photo", photo)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getphotourl", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getphotourl", addr), bodystr)
 	if data == nil {
 		logApi.Error("取图片下载地址出错")
 		//return 0
@@ -1472,7 +1472,7 @@ func forwardgroupfiletogroup(fromqq int, fromgroup int, togroup int, fileid stri
 	r.Form.Add("togroup", fmt.Sprintf("%v", togroup))
 	r.Form.Add("fileid", fileid)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/forwardgroupfiletogroup", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/forwardgroupfiletogroup", addr), bodystr)
 	if data == nil {
 		logApi.Error("群文件转发至群出错")
 		//return 0
@@ -1500,7 +1500,7 @@ func forwardgroupfiletofriend(fromqq int, fromgroup int, toqq int, fileid string
 	r.Form.Add("fileid", fileid)
 	r.Form.Add("filename", filename)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/forwardgroupfiletofriend", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/forwardgroupfiletofriend", addr), bodystr)
 	if data == nil {
 		logApi.Error("群文件转发至好友出错")
 		//return 0
@@ -1528,7 +1528,7 @@ func forwardfriendfiletofriend(loginqq int, fromqq int, toqq int, fileid string,
 	r.Form.Add("fileid", fileid)
 	r.Form.Add("filename", filename)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/forwardfriendfiletofriend", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/forwardfriendfiletofriend", addr), bodystr)
 	if data == nil {
 		logApi.Error("好友文件转发至好友出错")
 		//return 0
@@ -1548,7 +1548,7 @@ func getforwardedmsg(logonqq int, resid string) {
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	r.Form.Add("resid", resid)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getforwardedmsg", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getforwardedmsg", addr), bodystr)
 	if data == nil {
 		logApi.Error("查看转发聊天记录内容出错")
 		//return 0
@@ -1568,7 +1568,7 @@ func queryuserinfo(logonqq int, qq int) {
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	r.Form.Add("qq", fmt.Sprintf("%v", qq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/queryuserinfo", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/queryuserinfo", addr), bodystr)
 	if data == nil {
 		logApi.Error("查询用户信息出错")
 		//return 0
@@ -1588,7 +1588,7 @@ func querygroupinfo(logonqq int, group int) {
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	r.Form.Add("group", fmt.Sprintf("%v", group))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/querygroupinfo", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/querygroupinfo", addr), bodystr)
 	if data == nil {
 		logApi.Error("查询群信息出错")
 		//return 0
@@ -1614,7 +1614,7 @@ func sendfreepackage(fromqq int, group int, toqq int, pkgid int) {
 	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
 	r.Form.Add("pkgid", fmt.Sprintf("%v", pkgid))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/sendfreepackage", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/sendfreepackage", addr), bodystr)
 	if data == nil {
 		logApi.Error("发送免费礼物出错")
 		//return 0
@@ -1634,7 +1634,7 @@ func getqqonlinestate(logonqq int, qq int) string {
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	r.Form.Add("qq", fmt.Sprintf("%v", qq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getqqonlinestate", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getqqonlinestate", addr), bodystr)
 	if data == nil {
 		logApi.Error("取QQ在线状态出错")
 		return ""
@@ -1674,7 +1674,7 @@ func sharemusic(logonqq int, totype int, to int, musicname string, singername st
 		r.Form.Add("apptype", fmt.Sprintf("%v", apptype))
 	}
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/sharemusic", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/sharemusic", addr), bodystr)
 	if data == nil {
 		logApi.Error("分享音乐出错")
 		//return 0
@@ -1697,7 +1697,7 @@ func getpskey(logonqq int, domain string) string {
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	r.Form.Add("domain", domain)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getpskey", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getpskey", addr), bodystr)
 	if data == nil {
 		logApi.Error("获取skey出错")
 		return ""
@@ -1718,7 +1718,7 @@ func getskey(logonqq int) string {
 	_ = r.ParseForm()
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getskey", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getskey", addr), bodystr)
 	if data == nil {
 		logApi.Error("获取skey出错")
 		return ""
@@ -1738,7 +1738,7 @@ func getclientkey(logonqq int) string {
 	_ = r.ParseForm()
 	r.Form.Add("logonqq", fmt.Sprintf("%v", logonqq))
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/getclientkey", *addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/getclientkey", addr), bodystr)
 	if data == nil {
 		logApi.Error("获取clientkey出错")
 		return ""
