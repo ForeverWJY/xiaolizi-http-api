@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/coocood/freecache"
 	"github.com/gorilla/websocket"
+	"github.com/robfig/cron"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -16,14 +17,26 @@ import (
 
 //var addr = flag.String("addr", "192.168.58.134:10429", "http service address")
 
+//CRON Expression Format
+//A cron expression represents a set of times, using 5 space-separated fields.
+//Field name   | Mandatory? | Allowed values  | Allowed special characters
+//----------   | ---------- | --------------  | --------------------------
+//Minutes      | Yes        | 0-59            | * / , -
+//Hours        | Yes        | 0-23            | * / , -
+//Day of month | Yes        | 1-31            | * / , - ?
+//Month        | Yes        | 1-12 or JAN-DEC | * / , -
+//Day of week  | Yes        | 0-6 or SUN-SAT  | * / , - ?
+
 var (
 	LoginQQ int //当前登录QQ
 	logApi  = logx.New(".", "xiaolizi-http")
 	//pongTime = 5 * time.Second
 	//pingTime = 5 * time.Second
-	cacheSize = 100 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
-	cache     = freecache.NewCache(cacheSize)
-	addr      string
+	cacheSize   = 100 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
+	cache       = freecache.NewCache(cacheSize)
+	addr        string
+	managerQQ   = make(map[int]int)
+	autoTimeMap = make(map[int]*cron.Cron)
 )
 
 type JsonStruct struct {
@@ -33,6 +46,7 @@ type Config struct {
 	IP        string `json:"ip"`
 	Port      int    `json:"port"`
 	ManagerQQ []int  `json:"managerQQ"`
+	Help      string `json:"help"`
 }
 
 func (jst *JsonStruct) Load(filename string, v interface{}) {
@@ -49,6 +63,24 @@ func (jst *JsonStruct) Load(filename string, v interface{}) {
 	}
 }
 
+func loadManager(qqList []int) {
+	for _, i := range qqList {
+		fmt.Println(i)
+		managerQQ[i] = i
+	}
+}
+
+func isMangerQQ(rm *ReceiveMessage, f func()) {
+	i := managerQQ[rm.FromQQ.UIN]
+	if i > 0 {
+		if f != nil {
+			f()
+		}
+	} else {
+		reply(rm, "仅管理员可操作")
+	}
+}
+
 func main() {
 	//flag.Parse()
 	//log.SetFlags(0)
@@ -58,6 +90,10 @@ func main() {
 	JsonParse.Load("./config.json", &v)
 
 	addr = fmt.Sprintf("%v:%v", v.IP, v.Port)
+
+	if v.ManagerQQ != nil {
+		loadManager(v.ManagerQQ)
+	}
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -128,9 +164,31 @@ func main() {
 				if rm.FromQQ.UIN == LoginQQ {
 					return
 				}
-
-				//获取天气情况
-				if strings.Index(rm.Msg.Text, "天气 ") == 0 {
+				groupQQ := rm.FromGroup.GIN
+				if rm.Msg.Text == "help" {
+					reply(rm, v.Help)
+				} else if rm.Msg.Text == "开启报时" {
+					isMangerQQ(rm, func() {
+						newCron := cron.New()
+						_, err2 := newCron.AddFunc("0 * * * *", func() {
+							reply(rm, time.Now().Format("2006-01-02 15:04:05"))
+						})
+						if err2 != nil {
+							logx.Error(err2.Error())
+						}
+						newCron.Start()
+						autoTimeMap[groupQQ] = newCron
+						reply(rm, "本群自动报时已开启")
+					})
+				} else if rm.Msg.Text == "关闭报时" {
+					isMangerQQ(rm, func() {
+						delCron := autoTimeMap[groupQQ]
+						if delCron != nil {
+							delCron.Stop()
+							reply(rm, "本群自动报时已关闭")
+						}
+					})
+				} else if strings.Index(rm.Msg.Text, "天气 ") == 0 {//获取天气情况
 					weather := getWeather(strings.Replace(rm.Msg.Text, "天气 ", "", 1))
 					if weather != "" {
 						reply(rm, weather)
