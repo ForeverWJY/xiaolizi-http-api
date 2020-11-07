@@ -32,10 +32,11 @@ var (
 	logApi  = logx.New(".", "xiaolizi-http")
 	//pongTime = 5 * time.Second
 	//pingTime = 5 * time.Second
-	cacheSize   = 100 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
-	cache       = freecache.NewCache(cacheSize)
-	addr        string
-	managerQQ   = make(map[int]int)
+	cacheSize = 100 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
+	cache     = freecache.NewCache(cacheSize)
+	addr      string
+	managerQQ = make(map[int]int)
+	//群号 : cron
 	autoTimeMap = make(map[int]*cron.Cron)
 )
 
@@ -81,18 +82,22 @@ func isMangerQQ(rm *ReceiveMessage, f func()) {
 	}
 }
 
+func loadJsonConfig() Config {
+	JsonParse := new(JsonStruct)
+	v := Config{}
+	JsonParse.Load("./config.json", &v)
+	return v
+}
+
 func main() {
 	//flag.Parse()
 	//log.SetFlags(0)
 
-	JsonParse := new(JsonStruct)
-	v := Config{}
-	JsonParse.Load("./config.json", &v)
+	jsonConfig := loadJsonConfig()
+	addr = fmt.Sprintf("%v:%v", jsonConfig.IP, jsonConfig.Port)
 
-	addr = fmt.Sprintf("%v:%v", v.IP, v.Port)
-
-	if v.ManagerQQ != nil {
-		loadManager(v.ManagerQQ)
+	if jsonConfig.ManagerQQ != nil {
+		loadManager(jsonConfig.ManagerQQ)
 	}
 
 	interrupt := make(chan os.Signal, 1)
@@ -131,27 +136,11 @@ func main() {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				logApi.Debug("read:", err)
+				logApi.Debug("read error :", err.Error())
 				return
 			}
 			go func() {
 				logApi.Debugf("recv: %s", message)
-				//if len(message) > 0 {
-				//	for i, ch := range message {
-				//		switch {
-				//		case ch > '~':
-				//			message[i] = ' '
-				//		case ch == '\r':
-				//		case ch == '\n':
-				//		case ch == '\t':
-				//		case ch < ' ':
-				//			message[i] = ' '
-				//		}
-				//	}
-				//}
-				//logApi.Debugf("recv1: %s", message)
-				//msg := fmt.Sprintf("%s", message)
-				//logApi.Debug(msg)
 				var rm = new(ReceiveMessage)
 				err = json.Unmarshal(message, &rm)
 				if err != nil {
@@ -164,47 +153,7 @@ func main() {
 				if rm.FromQQ.UIN == LoginQQ {
 					return
 				}
-				groupQQ := rm.FromGroup.GIN
-				if rm.Msg.Text == "help" {
-					reply(rm, v.Help)
-				} else if rm.Msg.Text == "开启报时" {
-					isMangerQQ(rm, func() {
-						newCron := cron.New()
-						_, err2 := newCron.AddFunc("0 * * * *", func() {
-							reply(rm, time.Now().Format("2006-01-02 15:04:05"))
-						})
-						if err2 != nil {
-							logx.Error(err2.Error())
-						}
-						newCron.Start()
-						autoTimeMap[groupQQ] = newCron
-						reply(rm, "本群自动报时已开启")
-					})
-				} else if rm.Msg.Text == "关闭报时" {
-					isMangerQQ(rm, func() {
-						delCron := autoTimeMap[groupQQ]
-						if delCron != nil {
-							delCron.Stop()
-							reply(rm, "本群自动报时已关闭")
-						}
-					})
-				} else if strings.Index(rm.Msg.Text, "天气 ") == 0 {//获取天气情况
-					weather := getWeather(strings.Replace(rm.Msg.Text, "天气 ", "", 1))
-					if weather != "" {
-						reply(rm, weather)
-					}
-				} else {
-					//测试回复发送的消息
-					switch rm.Type {
-					case "PrivateMsg":
-						sendPrivateMsg(rm.LogonQQ, rm.FromQQ.UIN, rm.Msg.Text)
-						break
-						//case "GroupMsg":
-						//	sendGroupMsg(rm.LogonQQ, rm.FromGroup.GIN, rm.Msg.Text)
-						//	break
-					}
-				}
-
+				go onReceiveMessage(rm)
 			}()
 		}
 	}()
@@ -237,6 +186,50 @@ func main() {
 			case <-time.After(time.Second):
 			}
 			return
+		}
+	}
+}
+
+func onReceiveMessage(rm *ReceiveMessage) {
+	groupQQ := rm.FromGroup.GIN
+	if rm.Msg.Text == "help" {
+		jsonConfig := loadJsonConfig()
+		reply(rm, jsonConfig.Help)
+	} else if rm.Msg.Text == "开启报时" {
+		isMangerQQ(rm, func() {
+			newCron := cron.New()
+			_, err2 := newCron.AddFunc("0 * * * *", func() {
+				reply(rm, time.Now().Format("2006-01-02 15:04:05"))
+			})
+			if err2 != nil {
+				logx.Error(err2.Error())
+			}
+			newCron.Start()
+			autoTimeMap[groupQQ] = newCron
+			reply(rm, "本群自动报时已开启")
+		})
+	} else if rm.Msg.Text == "关闭报时" {
+		isMangerQQ(rm, func() {
+			delCron := autoTimeMap[groupQQ]
+			if delCron != nil {
+				delCron.Stop()
+				reply(rm, "本群自动报时已关闭")
+			}
+		})
+	} else if strings.Index(rm.Msg.Text, "天气 ") == 0 { //获取天气情况
+		weather := getWeather(strings.Replace(rm.Msg.Text, "天气 ", "", 1))
+		if weather != "" {
+			reply(rm, weather)
+		}
+	} else {
+		//测试回复发送的消息
+		switch rm.Type {
+		case "PrivateMsg":
+			sendPrivateMsg(rm.LogonQQ, rm.FromQQ.UIN, rm.Msg.Text)
+			break
+			//case "GroupMsg":
+			//	sendGroupMsg(rm.LogonQQ, rm.FromGroup.GIN, rm.Msg.Text)
+			//	break
 		}
 	}
 }
