@@ -11,7 +11,6 @@ func getWeather(city string) string {
 	//先查询缓存
 	value, err := cache.Get(key)
 	if err != nil {
-		logApi.Error(err.Error())
 		weather := getWeatherNow(city)
 		if weather != "" {
 			_ = cache.Set(key, []byte(weather + "\ncache for 2 hours"), 60*60*2)

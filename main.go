@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/robfig/cron"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -32,7 +33,7 @@ var (
 	logApi  = logx.New(".", "xiaolizi-http")
 	//pongTime = 5 * time.Second
 	//pingTime = 5 * time.Second
-	cacheSize = 100 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
+	cacheSize = 10 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 10 * 1024*1024 represents 10 Megabytes.
 	cache     = freecache.NewCache(cacheSize)
 	addr      string
 	managerQQ = make(map[int]int)
@@ -46,6 +47,7 @@ type JsonStruct struct {
 type Config struct {
 	IP        string `json:"ip"`
 	Port      int    `json:"port"`
+	HttpPort  int    `json:"httpPort"`
 	ManagerQQ []int  `json:"managerQQ"`
 	Help      string `json:"help"`
 }
@@ -87,6 +89,10 @@ func loadJsonConfig() Config {
 	v := Config{}
 	JsonParse.Load("./config.json", &v)
 	return v
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "xiaolizi-http-api golang")
 }
 
 func main() {
@@ -158,6 +164,12 @@ func main() {
 		}
 	}()
 
+	go func() {
+		//http server
+		http.HandleFunc("/", indexHandler)
+		http.ListenAndServe(fmt.Sprintf(":%v", jsonConfig.HttpPort), nil)
+	}()
+
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
@@ -221,6 +233,15 @@ func onReceiveMessage(rm *ReceiveMessage) {
 		if weather != "" {
 			reply(rm, weather)
 		}
+	} else if rm.Msg.Text == "oschina" {
+		msg := getOSCHINA()
+		arr := make([]string, len(*msg))
+		for _, v := range *msg {
+			arr = append(arr, v)
+			logApi.Debug(v)
+			//reply(rm, v)
+		}
+		reply(rm, strings.Join(arr, "\n"))
 	} else {
 		//测试回复发送的消息
 		switch rm.Type {
