@@ -33,20 +33,18 @@ func testFunc() {
 	//getclientkey(LoginQQ)
 }
 
-func reply(reqMsg *ReceiveMessage, msg string) *ReplyReturnRet {
-	switch reqMsg.Type {
-	case "PrivateMsg":
-		return sendPrivateMsg(LoginQQ, reqMsg.FromQQ.UIN, msg)
-	case "GroupMsg":
-		return sendGroupMsg(LoginQQ, reqMsg.FromGroup.GIN, msg)
+func reply(reqMsg *EventResponse, msg string) *ReplyReturnRet {
+	switch reqMsg.MessageType {
+	case "private":
+		return sendPrivateMsg(reqMsg.Sender.UserID, msg)
+	case "group":
+		return sendGroupMsg(reqMsg.GroupID, msg)
 	}
 	return nil
 }
 
 type ReplyReturnRet struct {
-	Ret    string `json:"ret"`
-	Random int    `json:"random"`
-	Req    int    `json:"req"`
+	MessageID int32 `json:"message_id"`
 }
 
 type Ret struct {
@@ -74,14 +72,13 @@ func getLoginQQ() int {
 }
 
 //发送好友消息
-func sendPrivateMsg(fromqq int, toqq int, text string) *ReplyReturnRet {
+func sendPrivateMsg(toqq int, text string) *ReplyReturnRet {
 	var r http.Request
 	_ = r.ParseForm()
-	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
-	r.Form.Add("toqq", fmt.Sprintf("%v", toqq))
-	r.Form.Add("text", text)
+	r.Form.Add("user_id", fmt.Sprintf("%v", toqq))
+	r.Form.Add("message", text)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/sendprivatemsg", addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/send_private_msg", httpAddr), bodystr)
 	if data != nil {
 		var ret = new(ReplyReturnRet)
 		_ = json.Unmarshal(data, &ret)
@@ -91,14 +88,13 @@ func sendPrivateMsg(fromqq int, toqq int, text string) *ReplyReturnRet {
 }
 
 //发送群消息
-func sendGroupMsg(fromqq int, togroup int, text string) *ReplyReturnRet {
+func sendGroupMsg(togroup int, text string) *ReplyReturnRet {
 	var r http.Request
 	_ = r.ParseForm()
-	r.Form.Add("fromqq", fmt.Sprintf("%v", fromqq))
-	r.Form.Add("togroup", fmt.Sprintf("%v", togroup))
-	r.Form.Add("text", text)
+	r.Form.Add("group_id", fmt.Sprintf("%v", togroup))
+	r.Form.Add("message", text)
 	bodystr := strings.TrimSpace(r.Form.Encode())
-	data := postFormData(fmt.Sprintf("http://%v/sendgroupmsg", addr), bodystr)
+	data := postFormData(fmt.Sprintf("http://%v/send_group_msg", addr), bodystr)
 	if data != nil {
 		var ret = new(ReplyReturnRet)
 		_ = json.Unmarshal(data, &ret)

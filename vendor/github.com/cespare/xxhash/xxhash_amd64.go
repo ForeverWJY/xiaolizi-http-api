@@ -9,5 +9,4 @@ package xxhash
 //go:noescape
 func Sum64(b []byte) uint64
 
-//go:noescape
-func writeBlocks(d *Digest, b []byte) int
+func writeBlocks(x *xxh, b []byte) []byte

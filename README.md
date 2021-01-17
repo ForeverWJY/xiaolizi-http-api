@@ -1,7 +1,7 @@
-# xiaolizi-http-api
-使用http api并启用监听，默认为`10429`端口，HTTP监听`86`端口
-
-## http插件位置 xiaolizi/httpapi.zip
+# 说明
+- 使用go-cqhttp，使用websocket接收消息，http发送消息
+- http服务端端口`port`
+- websoket服务端端口`wsPort`
 
 ## 功能
 - 天气：天气 北京

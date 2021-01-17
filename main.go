@@ -7,7 +7,6 @@ import (
 	"github.com/coocood/freecache"
 	"github.com/gorilla/websocket"
 	"github.com/robfig/cron"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -36,34 +35,23 @@ var (
 	cacheSize = 10 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 10 * 1024*1024 represents 10 Megabytes.
 	cache     = freecache.NewCache(cacheSize)
 	addr      string
+	httpAddr  string
 	managerQQ = make(map[int]int)
 	//群号 : cron
 	autoTimeMap = make(map[int]*cron.Cron)
+	jsonConfig  Config
 )
 
-type JsonStruct struct {
-}
 
-type Config struct {
-	IP        string `json:"ip"`
-	Port      int    `json:"port"`
-	HttpPort  int    `json:"httpPort"`
-	ManagerQQ []int  `json:"managerQQ"`
-	Help      string `json:"help"`
-}
 
-func (jst *JsonStruct) Load(filename string, v interface{}) {
-	//ReadFile函数会读取文件的全部内容，并将结果以[]byte类型返回
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return
+// Find获取一个切片并在其中查找元素。如果找到它，它将返回它的密钥，否则它将返回-1和一个错误的bool。
+func FindSlice(slice []int, val int) (int, bool) {
+	for i, item := range slice {
+		if item == val {
+			return i, true
+		}
 	}
-
-	//读取的数据为json格式，需要进行解码
-	err = json.Unmarshal(data, v)
-	if err != nil {
-		return
-	}
+	return -1, false
 }
 
 func loadManager(qqList []int) {
@@ -73,8 +61,8 @@ func loadManager(qqList []int) {
 	}
 }
 
-func isMangerQQ(rm *ReceiveMessage, f func()) {
-	i := managerQQ[rm.FromQQ.UIN]
+func isMangerQQ(rm *EventResponse, f func()) {
+	i := managerQQ[rm.UserID]
 	if i > 0 {
 		if f != nil {
 			f()
@@ -84,32 +72,97 @@ func isMangerQQ(rm *ReceiveMessage, f func()) {
 	}
 }
 
-func loadJsonConfig() Config {
-	JsonParse := new(JsonStruct)
-	v := Config{}
-	JsonParse.Load("./config.json", &v)
-	return v
+func loadAutoTimeCron() {
+	for _, v := range jsonConfig.ReportTime.Group {
+		resp := new(EventResponse)
+		resp.MessageType = "group"
+		resp.GroupID = v
+		newCron := cron.New()
+		err2 := newCron.AddFunc("0 0 * * * *", func() {
+			reply(resp, time.Now().Format("2006-01-02 15:04:05"))
+		})
+		if err2 != nil {
+			logx.Error(err2.Error())
+		}
+		newCron.Start()
+		autoTimeMap[v] = newCron
+	}
+	for _, v := range jsonConfig.ReportTime.Qq {
+		resp := new(EventResponse)
+		resp.MessageType = "private"
+		resp.Sender.UserID = v
+		newCron := cron.New()
+		err2 := newCron.AddFunc("0 0 * * * *", func() {
+			reply(resp, time.Now().Format("2006-01-02 15:04:05"))
+		})
+		if err2 != nil {
+			logx.Error(err2.Error())
+		}
+		newCron.Start()
+		autoTimeMap[v] = newCron
+	}
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "xiaolizi-http-api golang")
+	fmt.Fprintf(w, "go-cqhttp-api golang")
+}
+
+type EventResponse struct {
+	Interval      int    `json:"interval"`
+	MetaEventType string `json:"meta_event_type"`
+	PostType      string `json:"post_type"` //事件类型
+	SelfID        int    `json:"self_id"`   //收到事件的机器人 QQ 号
+	Status        struct {
+		AppEnabled     bool        `json:"app_enabled"`
+		AppGood        bool        `json:"app_good"`
+		AppInitialized bool        `json:"app_initialized"`
+		Good           bool        `json:"good"`
+		Online         bool        `json:"online"`
+		PluginsGood    interface{} `json:"plugins_good"`
+		Stat           struct {
+			PacketReceived  int `json:"packet_received"`
+			PacketSent      int `json:"packet_sent"`
+			PacketLost      int `json:"packet_lost"`
+			MessageReceived int `json:"message_received"`
+			MessageSent     int `json:"message_sent"`
+			DisconnectTimes int `json:"disconnect_times"`
+			LostTimes       int `json:"lost_times"`
+		} `json:"stat"`
+	} `json:"status"`
+	Sender struct {
+		Age      int    `json:"age"`
+		Nickname string `json:"nickname"`
+		Sex      string `json:"sex"`
+		UserID   int    `json:"user_id"`
+	} `json:"sender"`
+	SubType     string `json:"sub_type"`
+	Time        int    `json:"time"`     //	事件发生的时间戳
+	UserID      int    `json:"user_id"`  //发送者QQ
+	GroupID     int    `json:"group_id"` //群号
+	Font        int    `json:"font"`
+	Message     string `json:"message"`
+	MessageID   int    `json:"message_id"`
+	MessageType string `json:"message_type"`
+	RawMessage  string `json:"raw_message"`
 }
 
 func main() {
 	//flag.Parse()
 	//log.SetFlags(0)
 
-	jsonConfig := loadJsonConfig()
-	addr = fmt.Sprintf("%v:%v", jsonConfig.IP, jsonConfig.Port)
+	jsonConfig = loadJsonConfig()
+	addr = fmt.Sprintf("%v:%v", jsonConfig.IP, jsonConfig.WsPort)
+	httpAddr = fmt.Sprintf("%v:%v", jsonConfig.IP, jsonConfig.Port)
 
 	if jsonConfig.ManagerQQ != nil {
 		loadManager(jsonConfig.ManagerQQ)
 	}
+	loadAutoTimeCron()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	u := url.URL{Scheme: "ws", Host: addr, Path: "/ws"}
+	u := url.URL{Scheme: "ws", Host: addr, Path: "/event"}
 	logApi.Debugf("connecting to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -132,7 +185,7 @@ func main() {
 	defer c.Close()
 
 	//获取当前QQ
-	LoginQQ = getLoginQQ()
+	//LoginQQ = getLoginQQ()
 
 	testFunc()
 
@@ -147,18 +200,16 @@ func main() {
 			}
 			go func() {
 				logApi.Debugf("recv: %s", message)
-				var rm = new(ReceiveMessage)
+				var rm = new(EventResponse)
 				err = json.Unmarshal(message, &rm)
 				if err != nil {
 					logApi.Debug("转实体类出错", err.Error())
 					return
 				}
+				//得到当前QQ
+				LoginQQ = rm.SelfID
 				//干其他事情
-				logApi.Debugf("type: %v", rm.Type)
-				//忽略自己的消息
-				if rm.FromQQ.UIN == LoginQQ {
-					return
-				}
+				logApi.Debugf("post type: %v", rm.PostType)
 				go onReceiveMessage(rm)
 			}()
 		}
@@ -202,15 +253,15 @@ func main() {
 	}
 }
 
-func onReceiveMessage(rm *ReceiveMessage) {
-	groupQQ := rm.FromGroup.GIN
-	if rm.Msg.Text == "help" {
+func onReceiveMessage(rm *EventResponse) {
+	groupQQ := rm.GroupID
+	if rm.Message == "help" {
 		jsonConfig := loadJsonConfig()
 		reply(rm, jsonConfig.Help)
-	} else if rm.Msg.Text == "开启报时" {
+	} else if rm.Message == "开启报时" {
 		isMangerQQ(rm, func() {
 			newCron := cron.New()
-			_, err2 := newCron.AddFunc("0 * * * *", func() {
+			err2 := newCron.AddFunc("0 0 * * * *", func() {
 				reply(rm, time.Now().Format("2006-01-02 15:04:05"))
 			})
 			if err2 != nil {
@@ -218,73 +269,89 @@ func onReceiveMessage(rm *ReceiveMessage) {
 			}
 			newCron.Start()
 			autoTimeMap[groupQQ] = newCron
-			reply(rm, "本群自动报时已开启")
+			reply(rm, "自动报时已开启")
+
+			change := false
+			if groupQQ != 0 {
+				_, found := FindSlice(jsonConfig.ReportTime.Group, rm.UserID)
+				if !found {
+					jsonConfig.ReportTime.Group = append(jsonConfig.ReportTime.Group, groupQQ)
+					change = true
+				}
+			} else {
+				_, found := FindSlice(jsonConfig.ReportTime.Qq, rm.UserID)
+				if !found {
+					jsonConfig.ReportTime.Qq = append(jsonConfig.ReportTime.Qq, rm.UserID)
+					change = true
+				}
+			}
+			if change {
+				saveJsonConfig(jsonConfig)
+			}
 		})
-	} else if rm.Msg.Text == "关闭报时" {
+	} else if rm.Message == "关闭报时" {
 		isMangerQQ(rm, func() {
 			delCron := autoTimeMap[groupQQ]
 			if delCron != nil {
 				delCron.Stop()
-				reply(rm, "本群自动报时已关闭")
+				reply(rm, "自动报时已关闭")
+
+				//删除配置
+				change := false
+				if groupQQ != 0 {
+					index, found := FindSlice(jsonConfig.ReportTime.Group, groupQQ)
+					if found {
+						// 将删除点前后的元素连接起来
+						jsonConfig.ReportTime.Group = append(jsonConfig.ReportTime.Group[:index], jsonConfig.ReportTime.Group[index+1:]...)
+						change = true
+					}
+				} else {
+					index, found := FindSlice(jsonConfig.ReportTime.Qq, rm.UserID)
+					if found {
+						// 将删除点前后的元素连接起来
+						jsonConfig.ReportTime.Qq = append(jsonConfig.ReportTime.Qq[:index], jsonConfig.ReportTime.Qq[index+1:]...)
+						change = true
+					}
+				}
+				if change {
+					saveJsonConfig(jsonConfig)
+				}
 			}
 		})
-	} else if strings.Index(rm.Msg.Text, "天气 ") == 0 { //获取天气情况
-		weather := getWeather(strings.Replace(rm.Msg.Text, "天气 ", "", 1))
+	} else if strings.Index(rm.Message, "天气 ") == 0 { //获取天气情况
+		weather := getWeather(strings.Replace(rm.Message, "天气 ", "", 1))
 		if weather != "" {
 			reply(rm, weather)
 		}
-	} else if rm.Msg.Text == "oschina" {
-		msg := getOSCHINA()
-		arr := make([]string, len(*msg))
-		for _, v := range *msg {
-			arr = append(arr, v)
-			logApi.Debug(v)
-			//reply(rm, v)
+	} else if rm.Message == "oschina" {
+		arr := getOSCHINA()
+		if arr != nil {
+			index := 0
+			var rs []string
+			var trs []string
+			for _, v := range arr {
+				index++
+				trs = append(trs, string(rune(index))+"、"+v)
+				//每10条发送一次消息
+				if index%10 == 0 || index == len(arr) {
+					rs = append(rs, strings.Join(trs, "\n"))
+					trs = append([]string{})
+				}
+			}
+			for _, i := range rs {
+				reply(rm, i)
+			}
+			//reply(rm, strings.Join(arr, "\n"))
 		}
-		reply(rm, strings.Join(arr, "\n"))
 	} else {
 		//测试回复发送的消息
-		switch rm.Type {
-		case "PrivateMsg":
-			sendPrivateMsg(rm.LogonQQ, rm.FromQQ.UIN, rm.Msg.Text)
+		switch rm.MessageType {
+		case "private":
+			sendPrivateMsg(rm.UserID, rm.Message)
 			break
 			//case "GroupMsg":
 			//	sendGroupMsg(rm.LogonQQ, rm.FromGroup.GIN, rm.Msg.Text)
 			//	break
 		}
 	}
-}
-
-type ReceiveMessage struct {
-	Type   string `json:"Type"`
-	FromQQ struct {
-		UIN      int    `json:"UIN"`
-		NickName string `json:"NickName"`
-	} `json:"FromQQ"`
-	LogonQQ   int `json:"LogonQQ"`
-	TimeStamp struct {
-		Recv int `json:"Recv"`
-		Send int `json:"Send"`
-	} `json:"TimeStamp"`
-	FromGroup struct {
-		GIN int `json:"GIN"`
-	} `json:"FromGroup"`
-	Msg struct {
-		Req         int    `json:"Req"`
-		Seq         int64  `json:"Seq"`
-		Type        int    `json:"Type"`
-		SubType     int    `json:"SubType"`
-		SubTempType int    `json:"SubTempType"`
-		Text        string `json:"Text"`
-		BubbleID    int    `json:"BubbleID"`
-	} `json:"Msg"`
-	Hb struct {
-		Type int `json:"Type"`
-	} `json:"Hb"`
-	File struct {
-		ID   string `json:"ID"`
-		MD5  string `json:"MD5"`
-		Name string `json:"Name"`
-		Size int    `json:"Size"`
-	} `json:"File"`
 }
