@@ -29,7 +29,7 @@ import (
 
 var (
 	LoginQQ int //当前登录QQ
-	logApi  = logx.New(".", "xiaolizi-http")
+	logApi  = logx.New("./logs", "xiaolizi-http")
 	//pongTime = 5 * time.Second
 	//pingTime = 5 * time.Second
 	cacheSize = 10 * 1024 * 1024 // In bytes, where 1024 * 1024 represents a single Megabyte, and 10 * 1024*1024 represents 10 Megabytes.
@@ -41,8 +41,6 @@ var (
 	autoTimeMap = make(map[int]*cron.Cron)
 	jsonConfig  Config
 )
-
-
 
 // Find获取一个切片并在其中查找元素。如果找到它，它将返回它的密钥，否则它将返回-1和一个错误的bool。
 func FindSlice(slice []int, val int) (int, bool) {
@@ -254,6 +252,31 @@ func main() {
 }
 
 func onReceiveMessage(rm *EventResponse) {
+	switch rm.PostType {
+	case "message": //消息事件
+		break
+	case "notice": //通知事件
+		/*
+			群文件上传
+			群管理员变动
+			群成员减少
+			群成员增加
+			群禁言
+			好友添加
+			群消息撤回
+			好友消息撤回
+			群内戳一戳
+			群红包运气王
+			群成员荣誉变更
+		*/
+		return
+		break
+	case "request": //请求事件
+		return
+		break
+	case "meta_event": //元事件
+		break
+	}
 	groupQQ := rm.GroupID
 	if rm.Message == "help" {
 		jsonConfig := loadJsonConfig()
